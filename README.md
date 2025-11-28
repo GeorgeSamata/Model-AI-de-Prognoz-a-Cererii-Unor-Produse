@@ -106,5 +106,43 @@ Deoarece datele provin dintr-o simulare controlată (Digital Twin), setul de dat
     * Deși datele sunt dezechilibrate (mult mai multe date "normale" decât "defect"), nu s-a folosit *Resampling* (ștergerea/duplicarea datelor) în această etapă pentru a nu distruge continuitatea temporală.
     * *Soluție:* Gestionarea dezechilibrului se va face în etapa de antrenare prin parametrul `class_weight` în funcția de pierdere (Loss Function).
 
-#   M o d e l - A I - d e - P r o g n o z - a - C e r e r i i - U n o r - P r o d u s e  
- 
+### 4.3 Structurarea seturilor de date
+Având în vedere natura secvențială a datelor (serii de timp provenite de la senzori), împărțirea datelor nu s-a realizat aleatoriu, ci cronologic, pentru a simula scenariul real de producție (nu putem antrena pe date din viitor).
+Împărțire realizată:
+70% – Train (Antrenare): Primele 14.000 de înregistrări (istoric).
+15% – Validation (Validare): Următoarele 3.000 de înregistrări (folosite pentru optimizarea modelului).
+15% – Test (Testare): Ultimele 3.000 de înregistrări (date recente, "nevăzute" de model).
+Principii respectate:
+Fără scurgere de informație (Data Leakage): Scalarea (Min-Max) a fost "învățată" (.fit()) strict pe setul de antrenare. Valorile minime și maxime descoperite în Train au fost apoi aplicate pentru transformarea seturilor de Validare și Test.
+Cronologie: S-a dezactivat amestecarea aleatorie (shuffle=False) pentru a păstra integritatea temporală a uzurii simulate.
+
+### 4.4 Salvarea rezultatelor preprocesării
+Pentru a asigura eficiența și reproductibilitatea, datele au fost salvate în formate optimizate:
+Date preprocesate: Obiectul de scalare și encoding a fost serializat și salvat în data/processed/preprocessor.pkl.
+Seturi finale: Matricele de date au fost salvate în format binar NumPy (.npy) în folderele dedicate (data/train/, data/validation/, data/test/) pentru o încărcare rapidă în etapa de antrenare.
+Configurare: Parametrii utilizați (raportul de split, lista de coloane) sunt stocați în config/preprocessing_config.yaml.
+
+### 5. Fișiere Generate în Această Etapă
+
+În urma rulării scripturilor de simulare și preprocesare, structura proiectului conține acum următoarele fișiere esențiale:
+
+data/raw/
+simulation_output_v1.csv – Setul de date brut (20.000 observații) generat de Digital Twin.
+data/processed/
+preprocessor.pkl – Pipeline-ul Scikit-Learn salvat (scaler + encoder).
+data/train/, data/validation/, data/test/
+X_train.npy, y_train.npy – Matricele de intrare și țintă pentru antrenare.
+X_val.npy, y_val.npy – Matricele pentru validare.
+X_test.npy, y_test.npy – Matricele pentru testare.
+src/preprocessing/
+make_dataset.py – Scriptul Python care execută curățarea, normalizarea și împărțirea datelor.
+digital_twin_sim.py – Scriptul de generare a datelor sintetice (situat în src/data_acquisition/).
+data/README.md – Documentația dicționarului de date (variabile, unități de măsură).
+
+##  6. Stare Etapă (de completat de student)
+
+- [x] Structură repository configurată
+- [x] Dataset analizat (EDA realizată)
+- [x] Date preprocesate
+- [x] Seturi train/val/test generate
+- [x] Documentație actualizată în README + `data/README.md`
